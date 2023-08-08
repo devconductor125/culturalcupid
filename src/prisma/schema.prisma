@@ -1,0 +1,234 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+
+model User {
+  id               Int      @id @default(autoincrement())
+  username         String   @unique
+  email            String   @unique
+  password         String
+  source           String?
+  profilePhoto     String?
+  createAt         DateTime @default(now())
+  wallet           Int      @default(0)
+  planId           Int?
+  plan             Plan?    @relation(fields: [planId], references: [id])
+  Post             Post[]
+  stripeCustomerId String?
+  Cards            Card[] 
+  isAdmin          Boolean  @default(false)
+  adminType        String?  
+  address          String?
+  name             String?
+  telephone        String?
+  status           String?
+  ip               String?
+  speciality       String?
+  businessEmail    String?
+  showEmail        Boolean  @default(true)
+  showMobile       Boolean  @default(true)
+  businessPhone    String?
+  website          String?
+  facebook         String?
+  instagram        String?
+  twitter          String?
+  transactions     Transaction[] 
+  sentMessages     Message[] @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
+  home                  Boolean  @default(true)
+  webContent            Boolean  @default(true)
+  storage               Boolean  @default(true) 
+  smtp                  Boolean  @default(true)
+  payments              Boolean  @default(true)
+  keys                  Boolean  @default(true)
+  analytics             Boolean  @default(true)
+  uploads               Boolean  @default(true)
+  manageCategories      Boolean  @default(true)
+  theme                 Boolean  @default(true)
+  plans                 Boolean  @default(true)
+  trash                 Boolean  @default(true)
+  ads                   Boolean  @default(true)
+  memberType            String   @default("Individual")
+}
+
+model Card {
+  id           Int    @id @default(autoincrement())
+  name         String
+  cardNumber   String
+  expiry       String
+  cvc          String
+  stripeCardId String  
+  userId       Int
+  user         User    @relation(fields: [userId], references: [id])
+}
+
+model Transaction {
+  id           Int      @id @default(autoincrement())
+  userId       Int
+  user         User     @relation(fields: [userId], references: [id])
+  amount       Float
+  type         TransactionType
+  description  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+enum TransactionType {
+  CHARGE
+  SUBSCRIPTION
+  UPGRADE
+  TOPUP
+}
+
+model Message {
+  id         Int      @id @default(autoincrement())
+  content    String
+  senderId   Int
+  receiverId Int
+  sender     User     @relation("SentMessages", fields: [senderId], references: [id])
+  receiver   User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  createdAt  DateTime @default(now())
+}
+
+model StaticContent {
+  id               Int     @id @default(autoincrement())
+  siteName         String  @unique
+  siteSlogan       String  @unique
+  logo             String
+  maintainence     Boolean @default(false)
+  defaultLanguage  String  @default("English")
+  dateFormat       String?
+  favicon          String?
+  background       String? @default("#343537")
+}
+
+model Post {
+  id          Int       @id @default(autoincrement())
+  title       String
+  images      String // This will contain stringified JSON
+  description String
+  location    String
+  userId      Int
+  user        User      @relation(fields: [userId], references: [id])
+  categoryId  Int?
+  category    Category? @relation(fields: [categoryId], references: [id])
+  createdAt   DateTime  @default(now())
+  featured    Boolean   @default(false)
+  status      String?   @default("ACTIVE")
+  advertiserType    String    @default("Individual")
+  adType            String    @default("REGULAR")     
+  adLanguage        String    @default("English")
+  adRegion          String    @default("All")
+  adCountry         String    @default("")
+  @@unique([id, userId])
+}
+
+model Category {
+  id                    Int        @id @default(autoincrement())
+  name                  String
+  createAt              DateTime   @default(now())
+  subCategoryId         Int?
+  subCategory           Category?  @relation("SubCategory", fields: [subCategoryId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  subCategoriesRelation Category[] @relation("SubCategory")
+  order                 Int?
+  Post                  Post[]
+}
+
+model Language {
+  id                    Int        @id @default(autoincrement())
+  name                  String
+  code                  String
+}
+
+model Country {
+  id                    Int        @id @default(autoincrement())
+  name                  String
+  code                  String
+}
+
+model Storage {
+  id                              Int        @id @default(autoincrement())
+  wasabiEnabled                   Boolean    @default(false)
+  wasabiBucketName                String     @default("bucket")
+  wasabiAccessKeyId               String     @default("OXNRE3JD1ZNYP72GA8LM")
+  wasabiAccessKeySecret           String     @default("szjzkDMz0FrKNiCr7AX0zDr6U3eHXVgAl3DX7d2J")
+  wasabiRegion                    String     @default("us-west-1")
+  s3Enabled                       Boolean    @default(false)
+  s3BucketName                    String?
+  s3AccessKeyId                   String?
+  s3AccessKeySecret               String?
+  s3Region                        String?
+}
+
+model SMTP {
+  id                              Int        @id @default(autoincrement())
+  smtpHost                        String     @default("mail.worldtalents.co")
+  smtpPort                        String     @default("587")
+  smtpUsername                    String     @default("noreply@worldtalents.co")
+  smtpPassword                    String     @default("My@2023Amirwo")
+  smtpSenderMail                  String     @default("noreply@worldtalents.co")
+}
+
+
+model Payments {
+  id                 Int        @id @default(autoincrement())
+  stripeKey          String     @default("sk_test_51NCAJ6EqYI7ImjKtykijt5pbZzqql4oSJAG4uJBwHKbrBcIVupI3AQ3BgofBm7a3zW2QuhWJgOsuOJ5p7OlwbSwz00N4Ze1s5g")
+  stripePublicKey    String?    @default("sk_test_51NCAJ6EqYI7ImjKtykijt5pbZzqql4oSJAG4uJBwHKbrBcIVupI3AQ3BgofBm7a3zW2QuhWJgOsuOJ5p7OlwbSwz00N4Ze1s5g")
+  paypalClientId     String     @default("AQSJRx_yBxdf2m9nQXcMmM9G4vPRqSeTFp_PxWQIDn5Qbs4LpPL-V1ruQXW04YUA5WzK0a7Ftz5al_H6")     
+  paypalSecretKey    String     @default("EOoO6XM2oSpx1r2LA-eIdFfMUrXrE9tzfOuSh3ie_mqSjEAao7ZLYtTyatcT5_DZLtOJuisNWwjblymC")     
+}
+
+model Analytics {
+  id                 Int        @id @default(autoincrement())
+  googleAnalyticCode String     @default("dummy")
+}
+
+model Keys {
+  id                 Int        @id @default(autoincrement())
+  googleMapApiKey    String?
+  youtubeApiKey      String?
+  reCaptchaKey       String?
+}
+
+model Uploads {
+  id                 Int        @id @default(autoincrement())
+  allowedExtensions  String     @default("jpg,png,jpeg,gif,mkv,docx,zip,rar,pdf,doc,mp3,mp4,flv,wav,txt,mov,avi,webm,wav,mpeg")
+  allowedMimeTypes   String     @default("image/jpeg")
+  maxUploadSize      String     @default("256")
+}
+
+model Theme {
+  id                 Int        @id @default(autoincrement())
+  type               String?     
+}
+
+model Plan {
+  id                 Int        @id @default(autoincrement())
+  name               String     @unique
+  createdAt          DateTime?  @default(now())
+  postNumber         Int
+  featuedPostNumber  Int
+  price              Float
+  User               User[]
+  browseAndSaveAds   Boolean?   @default(false)  
+  messageAdvertisers Boolean?   @default(false)
+  chatWithAdvertisers Boolean?  @default(false)
+  createGroupChats   Boolean?   @default(false)
+  postVideoUrls      Boolean?   @default(false)
+  uploadVideos       Boolean?   @default(false)
+  featuredMember     Boolean?   @default(false)
+  price90Days        Float      @default(1.99)
+  priceAnnual        Float      @default(5.99)
+  discountPercent    Float      @default(0.0)
+  discountedPrice    Float?
+}
+
